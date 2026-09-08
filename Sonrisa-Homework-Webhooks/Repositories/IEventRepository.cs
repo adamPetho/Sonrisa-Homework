@@ -8,6 +8,6 @@ namespace Sonrisa_Homework_Webhooks.Repositories
         IEvent? GetById(Guid id);
         void Add(IEvent alert);
         void Update(IEvent alert);
-        void Delete(Guid id);
+        bool Delete(Guid id);
     }
 }

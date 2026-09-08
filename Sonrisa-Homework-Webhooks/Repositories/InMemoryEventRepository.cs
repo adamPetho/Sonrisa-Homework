@@ -15,9 +15,9 @@ namespace Sonrisa_Homework_Webhooks.Repositories
             }
         }
 
-        public void Delete(Guid id)
+        public bool Delete(Guid id)
         {
-            Events.TryRemove(id, out _);
+            return Events.TryRemove(id, out _);
         }
 
         public IReadOnlyCollection<IEvent> GetAll()
