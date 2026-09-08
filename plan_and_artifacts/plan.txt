@@ -1,0 +1,5 @@
+1. Understand the assignment
+2. Initialize git repo
+3. Plan/Figure out the overall structure, approach and tech stack
+4. Build MVP
+5. Test MVP
