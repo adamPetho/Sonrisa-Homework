@@ -2,6 +2,7 @@ using Sonrisa_Homework_Webhooks.Parser;
 using Sonrisa_Homework_Webhooks.Repositories;
 using Sonrisa_Homework_Webhooks.Services;
 using Sonrisa_Homework_Webhooks.Services.AlertEvaluators;
+using Sonrisa_Homework_Webhooks.Services.NotificationChannels;
 using Sonrisa_Homework_Webhooks.Services.NotificationDispatchers;
 
 namespace Sonrisa_Homework_Webhooks
@@ -25,6 +26,9 @@ namespace Sonrisa_Homework_Webhooks
             builder.Services.AddSingleton<IAlertEvaluator, MarketMovementAlertEvaluator>();
 
             builder.Services.AddSingleton<INotificationDispatcher, NotificationDispatcher>();
+
+            builder.Services.AddSingleton<INotificationChannel, EmailNotificationChannel>();
+            builder.Services.AddSingleton<INotificationChannel, SlackNotificationChannel>();
 
             builder.Services.AddHostedService<NotificationWorker>();
 
