@@ -1,0 +1,27 @@
+Backend
+────────────
+ASP.NET Core
+.NET 9/10
+In-Memory Database
+API endpoint "POST /api/events" to simulate events
+Alert Engine and Message Queue for async processing
+Admin API endpoints with API-Key verification
+
+                ┌──────────────┐
+                │ Event API    		│
+                └──────┬───────┘
+                       │
+                       ▼
+                ┌──────────────┐
+                │ Alert Engine     │
+                └──────┬───────┘
+                         │
+                         ▼
+                ┌──────────────┐
+                │ Message      		│
+                │ Queue        		│
+                └──────┬───────┘
+                         │
+              ┌────────┴────────┐
+              ▼                     ▼
+        Email Worker            Slack Worker

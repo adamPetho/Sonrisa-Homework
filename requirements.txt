@@ -1,0 +1,18 @@
+A user should be able to:
+
+- Create an alert
+- Define what they're interested in
+- Define when it should trigger
+- Choose one or more notification channels:
+	- Email
+	- Slack
+- Enable/disable an alert
+
+
+Admin view:
+
+- Read internal database
+- Create and delete items from database
+
+Event: External event.
+Alert: User defined rule.
