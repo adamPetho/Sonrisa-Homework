@@ -42,8 +42,6 @@ namespace Sonrisa_Homework_Webhooks
 
             app.UseHttpsRedirection();
 
-            app.UseAuthorization();
-
             app.MapControllers();
 
             app.Run();

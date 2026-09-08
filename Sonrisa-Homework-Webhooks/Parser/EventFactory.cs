@@ -5,6 +5,11 @@ namespace Sonrisa_Homework_Webhooks.Parser
 {
     public sealed class EventFactory : IEventFactory
     {
+        private static readonly JsonSerializerOptions JsonOptions = new()
+        {
+            PropertyNameCaseInsensitive = true
+        };
+
         public IEvent Create(EventRequest request)
         {
             return request.Type.ToLowerInvariant() switch
@@ -18,7 +23,7 @@ namespace Sonrisa_Homework_Webhooks.Parser
 
         private static MarketMovementEvent CreateMarketMovement(JsonElement data)
         {
-            var marketEvent = data.Deserialize<MarketMovementData>() ?? throw new JsonException("Invalid market movement data.");
+            var marketEvent = data.Deserialize<MarketMovementData>(JsonOptions) ?? throw new JsonException("Invalid market movement data.");
 
             return new MarketMovementEvent(
                 Guid.NewGuid(),
