@@ -1,4 +1,5 @@
 ﻿using Sonrisa_Homework_Webhooks.Models;
+using Sonrisa_Homework_Webhooks.Models.Alerts;
 using Sonrisa_Homework_Webhooks.Models.Events;
 using Sonrisa_Homework_Webhooks.Repositories;
 using Sonrisa_Homework_Webhooks.Services.AlertEvaluators;
@@ -27,14 +28,15 @@ namespace Sonrisa_Homework_Webhooks.Services
         {
             var alerts = _alertRepository
                 .GetAll()
-                .Where(x => x.Enabled && x.EventType == @event.Type);
+                .Where(x => x.Enabled)
+                .Where(x => x.EventType == @event.Type);
 
             foreach (var alert in alerts)
             {
                 if (!_alertEvaluator.Matches(alert, @event))
                     continue;
 
-                foreach (var channel in alert.Channels)
+                foreach (var channel in GetChannels(alert))
                 {
                     var notification = new Notification
                     {
@@ -61,6 +63,15 @@ namespace Sonrisa_Homework_Webhooks.Services
                     $"{market.Symbol} moved {market.ChangePercentage:+0.##;-0.##;0}%.",
     
                 _ => $"Event occurred: {@event.Type}"
+            };
+        }
+
+        private static IEnumerable<string> GetChannels(IAlert alert)
+        {
+            return alert switch
+            {
+                MarketMovementAlert market => market.Channels,
+                _ => []
             };
         }
     }
