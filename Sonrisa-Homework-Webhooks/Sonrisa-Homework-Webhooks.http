@@ -1,0 +1,6 @@
+@Sonrisa_Homework_Webhooks_HostAddress = http://localhost:5034
+
+GET {{Sonrisa_Homework_Webhooks_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
