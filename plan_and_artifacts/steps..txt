@@ -1,0 +1,33 @@
+Steps I did so far:
+- Understanding the assignment
+- Refreshing my knowledge in how to use Webhooks in .NET.
+- Set up the base of the git repo.
+- Designed the architecture and basic requirements with ChatGPT.
+- Simplified  the AI's plan drastically to fit in the 24 hours window:
+	- No frontend
+	- No PostgreSQL and EF Core
+	- No user register/login (Maybe if I have time)
+	- Simplified admin API endpoint with API-Key
+
+- Set up the boilerplate .NET Core server.
+- Deciding on Event and Notification structure and responsibilities.
+- Creating In Memory Databases for Alerts and Events.
+- Using interface for everything for future expansion.
+- Cleaning up after AI.
+- Designing AlertEngine with AI.
+- Creating simple MessageQueue with Channel<>.
+- Create simple NotificationWorker to process dequeued Notifications from the MessageQueue.
+- Design INotifierDispatcher to prepare for different notification systems like Email, Slack, Discord, etc.
+- Checking logic again, running the project to ensure everything works and creating meaningful commits as huge milestones were achieved.
+- Evaluating about Events InMemoryDatabase, maybe we don't even need it. Useful if admins need to debug.
+- Create the Event Controller to simulate external events like Bitcoin Price movement
+- Create Event JSON parser
+- Create a very simple User MarketMovementController for "users" to create new alerts. No registration, no validation, very minimal, only for the MVP.
+- Test internal core with Postman thoroughly.
+- Debug and fix issues with the help of AI.
+- Design minimalistic Admin Controller with API-Key authentication.
+- Let's have the test API-Keys in appsettings.Development.json. (Which at least won't be commited and pushed up to Git.)
+- Making sure API keys are not pushed to Git, creating "appsettings.Development.example.json" for reviewers.
+- Final test rounds.
+- Creating documentation, artifacts and final architecture blueprint.
+
