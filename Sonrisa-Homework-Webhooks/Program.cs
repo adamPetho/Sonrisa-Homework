@@ -1,3 +1,4 @@
+using Sonrisa_Homework_Webhooks.Parser;
 using Sonrisa_Homework_Webhooks.Repositories;
 using Sonrisa_Homework_Webhooks.Services;
 using Sonrisa_Homework_Webhooks.Services.AlertEvaluators;
@@ -16,6 +17,8 @@ namespace Sonrisa_Homework_Webhooks
             builder.Services.AddSingleton<IEventRepository, InMemoryEventRepository>();
 
             builder.Services.AddSingleton<IMessageQueue, MessageQueue>();
+
+            builder.Services.AddSingleton<IEventFactory, EventFactory>();
 
             builder.Services.AddSingleton<IAlertEngine, AlertEngine>();
 
