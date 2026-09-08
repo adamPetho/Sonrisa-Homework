@@ -163,17 +163,14 @@ namespace Sonrisa_Homework_Webhooks.Controllers
                 return false;
             }
 
-            var configuredKeys = _configuration["AdminKeys"];
+            var configuredKeys = _configuration
+                    .GetSection("AdminKeys")
+                    .Get<string[]>();
 
-            if (string.IsNullOrWhiteSpace(configuredKeys))
+            if (configuredKeys is null || configuredKeys.Length == 0)
                 return false;
 
-            return configuredKeys
-                .Split(',', StringSplitOptions.RemoveEmptyEntries)
-                .Select(x => x.Trim())
-                .Contains(
-                    providedKey.ToString(),
-                    StringComparer.Ordinal);
+            return configuredKeys?.Contains(providedKey) == true;
         }
     }
 }
