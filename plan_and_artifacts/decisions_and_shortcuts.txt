@@ -1,0 +1,259 @@
+1. Generic event abstraction
+We introduced: "IEvent"
+with concrete event types such as: "MarketMovementEvent"
+
+The API receives a generic event envelope:
+
+EventRequest
+    ├── Type
+    └── Data
+
+and IEventFactory converts that into the appropriate domain event.
+
+Why: The assignment explicitly mentions different kinds of things happening in the world. We don't want the entire system coupled to Bitcoin/market movements.
+
+2. Generic alert abstraction
+
+We introduced: "IAlert" with: "MarketMovementAlert" as the first concrete implementation.
+The base IAlert deliberately contains only generic properties:
+-Id
+-Name
+-EventType
+-Enabled
+
+Market-specific configuration such as Symbol and ThresholdPercentage lives on MarketMovementAlert.
+
+Why: Avoid putting domain-specific properties into the generic alert abstraction and make future alert types possible.
+
+3. Separate alert evaluation from the engine
+
+The AlertEngine is responsible for orchestration:
+
+find relevant alerts
+        ↓
+evaluate them
+        ↓
+create notifications
+        ↓
+queue notifications
+
+while IAlertEvaluator contains the actual matching logic.
+
+Why: We don't want the engine itself becoming a giant collection of:
+
+if market...
+if news...
+if weather...
+if disaster...
+
+The evaluation logic can grow independently.
+
+4. Notifications are separate domain objects
+
+A Notification represents a single delivery:
+
+Alert
+  +
+Event
+  +
+Channel
+      ↓
+Notification
+
+Therefore an alert configured for both email and Slack creates two notifications.
+
+Why: Delivery is channel-specific, and this gives us a natural place to track status such as:
+-Pending
+-Sent
+-Failed
+
+5. Asynchronous notification processing
+
+We deliberately separated:
+
+Event processing
+
+from:
+
+Notification delivery
+
+using:
+
+IMessageQueue
+    ↓
+System.Threading.Channels
+    ↓
+NotificationWorker : BackgroundService
+
+The API doesn't directly send email/Slack.
+
+Why: Notification delivery can be slow or fail independently from event ingestion.
+
+6. Pluggable notification channels
+
+We introduced: "INotificationChannel" with:
+-EmailNotificationChannel
+-SlackNotificationChannel
+
+and a dispatcher: "INotificationDispatcher".
+
+The dispatcher selects the appropriate channel implementation.
+
+Why: Adding another channel should not require modifying AlertEngine.
+
+For example, adding Discord later would be approximately:
+
+DiscordNotificationChannel : INotificationChannel
+
+plus DI registration.
+
+7. Repository abstraction
+
+Alerts and events are accessed through repositories rather than directly through collections:
+
+IAlertRepository
+IEventRepository
+
+The current implementation uses in-memory collections.
+
+Why: It keeps persistence separate from the business logic and gives us a straightforward path to replace the storage implementation later.
+
+8. Separate admin API
+
+The admin functionality lives in its own:
+
+AdminController
+
+rather than mixing administration into the normal event/alert endpoints.
+
+It provides CRUD-style access to the in-memory data and is protected by:
+
+X-Admin-Key
+
+The actual keys come from configuration rather than being hard-coded.
+
+Why: Clear separation between normal application functionality and administrative operations.
+
+---------------------------------------------------------------------------------------------------------------------------------------------------
+MVP shortcuts / deliberate compromises
+
+1. No real database
+
+Instead of PostgreSQL + EF Core:
+
+ConcurrentDictionary<Guid, IAlert>
+ConcurrentDictionary<Guid, IEvent>
+
+Trade-off: Everything disappears when the application restarts.
+
+Why: A real persistence layer wasn't necessary to demonstrate the architecture within 24 hours. It's also easy to implement different repositories like PostgreSQL or MondoDB.
+
+2. No authentication/user system
+
+We skipped:
+
+Users
+Registration
+Login
+JWT/session authentication
+User → Alert ownership
+
+Alerts effectively belong to the application rather than individual users.
+
+Why: The assignment asks for alert functionality, but implementing a complete identity system would consume a significant portion of the limited time.
+
+The admin API instead uses a simple API key.
+
+3. Only one event type
+
+Although the architecture supports multiple event types, the MVP actually implements: "MarketMovementEvent"
+
+Why: We wanted to prove the extensibility of the design without spending hours implementing several unrelated domains.
+
+4. Only one alert type
+
+Likewise, we implemented: "MarketMovementAlert"
+
+rather than building a generic alert-rule engine.
+
+Why: A fully generic rule system would introduce considerably more complexity that would take significant time.
+
+We explicitly avoided things like:
+
+-JSON rule trees
+-expression languages
+-dynamic predicates
+-user-defined scripting
+
+5. Hard-coded event/alert evaluation logic
+
+The evaluator currently knows how to evaluate: "MarketMovementAlert + MarketMovementEvent"
+
+This isn't fully dynamic.
+Why: It demonstrates the abstraction without building an entire rule engine.
+The architecture leaves room to introduce additional evaluators later.
+
+6. Notification channels are placeholders
+
+Email and Slack currently effectively do: "Console.WriteLine(...)" rather than actually communicating with external services.
+
+Why: The important part for this assignment was proving the notification pipeline and channel abstraction.
+
+Real implementations would eventually deal with:
+
+-SMTP/email provider
+-Slack Web API/webhooks
+-credentials
+-timeouts
+-retries
+-rate limits
+-etc.
+
+7. In-process message queue
+
+We used: "System.Threading.Channels" instead of RabbitMQ/Kafka/Azure Service Bus/etc.
+
+Trade-off: If the application dies, queued notifications are lost.
+Why: For a single-process MVP, an in-memory queue is dramatically simpler while still demonstrating asynchronous processing.
+This is probably one of the strongest shortcuts we made because the abstraction means the underlying implementation can later be replaced.
+
+8. No distributed architecture
+
+Everything currently runs inside one ASP.NET Core process:
+-API
+-Alert Engine
+-Queue
+-Worker
+-Notification Dispatcher
+
+Why: There was no reason to introduce microservices, containers, service discovery, distributed queues, etc. for a 24-hour assignment.
+
+9. No frontend
+
+The "admin view" is represented by API endpoints rather than an actual UI.
+Why: The assignment is backend-oriented and time was limited. The API still demonstrates that an admin can inspect and modify the underlying data.
+
+10. Minimal validation
+
+We added important basic validation, such as:
+
+-threshold >= 0
+-at least one notification channel
+
+but didn't build a comprehensive validation/error-handling framework.
+Why: Enough validation to make the API sane without creating infrastructure that isn't relevant to the core problem.
+
+11. No production-grade reliability mechanisms
+
+We didn't implement:
+
+-Retries
+-Dead-letter queues
+-Persistent notification status
+-Idempotency
+-Distributed locking
+-Rate limiting
+-Circuit breakers
+-Observability/metrics
+
+Why: These are production concerns rather than requirements for demonstrating the core architecture.

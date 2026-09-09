@@ -1,0 +1,182 @@
+Prompt history. Used ChatGPT (Free plan).
+
+1. 
+"""
+Hey, I got this task as a homework from a company. First let's plan and discover how we can achieve this: "We want users to be able to set up alerts so they get notified when something important happens in the world — like breaking news, market movements, natural disasters, that kind of thing. Should work for both email and Slack. Make it flexible enough that we can add more channels later. We need an admin view too." I was also told that I may use any technology, language, or framework I choose. There is no further specification. No wireframes. No schema proposal. No agreement on what "something important" means, where the data comes from, or how events are detected. My very brief plan from the top of my head: """ 1. Understand the assignment 2. Initialize git repo 3. Plan/Figure out the overall structure, approach and tech stack 4. Build MVP 5. Test MVP """ I feel like we will have to deal with WebHooks here. Let's plan it out.
+"""
+
+2.
+"""
+Ok, so I only have 24 hours to complete this while documenting my steps, we need to cut back architecture.
+
+No frontend, only a backend server
+No PostgreSQL and EF Core, let's use a simple InMemory Database
+POST /api/events endpoint to simulate external events
+I agree, the MVP doesn't need to understand the entire world. The BTC price movement example is good. Let's use this market movement to as the primary example while keeping in mind to build expendable.
+I agree, let's do not build a generic rule programming language, we will hardcode a Bitcoin movement Alert type.
+Let's keep the "Admin view" single. I think we only have time for a couple of endpoints with API-key verification to read, create and write to the in memory database.
+Yes, let's use an Alert engine and Message queue to have async event procession.
+We will figure it out how can we use SMPT and Slack API when we get there.
+No time for docker.
+Not sure if we have time to implement User registration and login, we will see.
+
+In the meantime, I'm done setting up the repository, the documents (req.txt, architecture.txt and so on) and the basic .NET Core 10 server.
+"""
+3.
+"""
+IAlertEngine should not be strictly for the "MarketMovementEvent" type. Perhaps we should introduce a IEvent interface that every future event like MarketMovement, BreakingNews, WeatherEvent should follow? How should the simple Notification model/class look like? How should the simple Event/IEvent model/class look like?
+"""
+
+4.
+"""
+Nice. I will create the AlertEvaluator. I forgot to ask, how would the simple Alert record's properties look like? Also, let's create the first version of the AlertEngine and MessageQueue.
+"""
+
+5.
+"""
+I believe we cannot let "Alert" class become so specific for the MarketMovementAlert. I will introduce an IAlert interface and have:
+
+MarketMovementAlert(
+        Guid Id,
+        string Name,
+        string EventType,
+        bool Enabled,
+        string Symbol,
+        decimal ThresholdPercentage,
+        IReadOnlyCollection<string> Channels) : IAlert;
+
+IAlert will only enforce the most important properties:
+
+public interface IAlert
+{
+    Guid Id { get; }
+    string Name { get; }
+    string EventType { get; }
+    bool Enabled { get; }
+}
+
+I also believe that we do not need MovementDirection enum, because decimal can hold negative values. This way we can skip the converting decimals to assign the proper enum.
+Changed the Evaluator to this, please check it:
+
+public bool Matches(IAlert alert, IEvent @event)
+{
+    if (@event is not MarketMovementEvent marketEvent)
+        return false;
+
+    if (alert is not MarketMovementAlert marketAlert)
+        return false;
+
+    if (marketAlert.Symbol != marketEvent.Symbol)
+        return false;
+
+    if (Math.Abs(marketEvent.ChangePercentage) >= marketAlert.ThresholdPercentage)
+        return true;
+
+    return false;
+}
+
+And we will fix building the message outside using the decimal.
+The rest looks good!
+"""
+
+6.
+"""
+I wonder who or what will call the AlertEngine ProcessAsync?
+"""
+
+7.
+"""
+Yes, AlertEngine should not be a background service, let's preserve this distinction. Let's create the simple EventsController and the event factory/parser, so we don't tie the controller to the Bitcoin Movement Event.
+"""
+
+8.
+"""
+Let's implement the AlertEngine against IAlertEvaluator and then we can test the complete core pipeline
+"""
+
+9.
+"""
+Let's create a controller where users can add new Alerts to the Alert repository. For the lack of time we can skip register/login and simply process the request and populate the alert inmemory database.
+"""
+
+10.
+"""
+Please create two curl commands for me:
+
+1. send POST request to http://localhost:5034/api/marketmovement
+2. send POST request to http://localhost:5034/api/events
+
+One to create a User Alert and then one to simulate a external event
+"""
+
+11.
+"""
+curl: (7) Failed to connect to localhost port 5034: Connection refused. The breakpoint wasn't hit either
+"""
+
+12.
+"""
+{"type":"https://tools.ietf.org/html/rfc9110#section-15.5.16","title":"Unsupported Media Type","status":415,"traceId":"00-f3fd258d1bb24527bf69207cbe1aa4ca-2dfc6875dd9015e0-00"}
+"""
+
+13.
+"""
+Nice! With Postman, adding the Content-Type now finally hits the breakpoint properly. The .NET Core and the Controller works properly! But why doesn't it work from curl.exe?
+"""
+
+14.
+"""
+Nice, we hit the controller, but on Parsing we lose the values.
+
+    private static MarketMovementEvent CreateMarketMovement(JsonElement data)
+    {
+        var marketEvent = data.Deserialize<MarketMovementData>() ?? throw new JsonException("Invalid market movement data.");
+
+        return new MarketMovementEvent(
+            Guid.NewGuid(),
+            marketEvent.Symbol,
+            marketEvent.ChangePercentage,
+            marketEvent.OccurredAt);
+    }
+}
+
+public sealed record MarketMovementData(string Symbol, decimal ChangePercentage, DateTimeOffset OccurredAt);
+
+It becomes:
+Random GUID, null, 0.0, DateTimeOffSet.Default).
+"""
+
+15.
+"""
+Adding and using this simple JSON option fixed it! The internal core seems to work fine!
+"""
+
+16.
+"""
+First let's have some placeholder Notification dispatchers, it's OK if all they do is write to console. Let's create the Email and Slack to showcase we can expand this in the future.
+"""
+
+17.
+"""
+Let's create a minimal Admin Controller, which can read, update, write into both Databases. On every method we should check for a admin API-Key from the Configuration["AdminKeys"].
+"""
+
+18.
+"""
+Let's not hard-code API keys. Can we use the IConfiguration file? Example from other repo: "" public class Startup(IConfiguration configuration) { public IConfiguration Configuration { get; } = configuration; . . . ""
+"""
+
+19.
+"""
+Should I untrack it and put this file into .gitignore? git rm --cached appsettings.Development.json git commit -m "Stop tracking appsettings.Development.json"
+"""
+
+20.
+"""
+I believe we did what we could in this short time. I tested all endpoints, it works as intended! Can you show me the final architecture?
+"""
+
+21.
+"""
+Let's summarize the architecture decisions we made along the way and the short-cuts we made in order to keep it a simple MVP doable in 24 hours.
+"""

@@ -1,36 +1,3 @@
-Backend
-────────────
-ASP.NET Core
-.NET 9/10
-In-Memory Database
-API endpoint "POST /api/events" to simulate events
-Alert Engine and Message Queue for async processing
-Admin API endpoints with API-Key verification
-
------------------------------------------------------------------------
-
-API Endpoints:
-/api/events
-    POST
-        External event ingestion
-
-/api/marketmovement
-    POST
-        Create market movement alert
-
-/api/admin
-    GET    /alerts
-    GET    /alerts/{id}
-    POST   /alerts
-    PUT    /alerts/{id}
-    DELETE /alerts/{id}
-
-    GET    /events
-    GET    /events/{id}
-    DELETE /events/{id}
-
---------------------------------------------------------------------------
-
 			 ┌──────────────────────┐
                          │      External               │
                          │       Systems               │
